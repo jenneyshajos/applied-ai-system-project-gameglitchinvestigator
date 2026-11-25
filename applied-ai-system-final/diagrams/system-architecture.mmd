@@ -1,36 +1,46 @@
 flowchart LR
-    subgraph Client["Streamlit application"]
-        User["Player"]
-        UI["app.py\nInterface and rerun handling"]
-        State[("session_state\nsecret, attempts, score,\nstatus, history, difficulty")]
-        User -->|"text guess or button"| UI
-        UI <-->|"read and persist game state"| State
+    subgraph Interface["User Interface"]
+        Human["Human Player"]
+        UI["Streamlit UI\n(app.py)"]
+        State[("Session State\nsecret, attempts, score,\nstatus, history, difficulty")]
+        Human -->|"1. Guess or click New Game"| UI
+        UI <-->|"2. Read and save game state"| State
     end
 
-    subgraph Logic["Pure game logic"]
-        Range["get_range_for_difficulty"]
-        Parse["parse_guess"]
-        Compare["check_guess"]
-        Score["update_score"]
+    subgraph Processing["Application Processing"]
+        Range["Range Component\nget_range_for_difficulty"]
+        Parser["Input Processor\nparse_guess"]
+        Evaluator["Result Evaluator\ncheck_guess"]
+        Scorer["Score Calculator\nupdate_score"]
+
+        UI -->|"3. Chosen difficulty"| Range
+        Range -->|"Number range"| UI
+        UI -->|"4. Raw guess text"| Parser
+        Parser -->|"Valid guess or error"| UI
+        UI -->|"Guess and secret"| Evaluator
+        Evaluator -->|"Outcome and hint"| UI
+        UI -->|"Outcome and attempt number"| Scorer
+        Scorer -->|"Updated score"| UI
     end
 
-    subgraph Results["Verification"]
-        Pytest["pytest suite"]
-        Demo["demo.py"]
-        Evidence["assets/demo-output.txt\nassets/test-output.txt"]
+    subgraph Verification["Testing and AI Result Checking"]
+        HumanCheck["Human Reviewer"]
+        AIAssistant["AI Assistant\nCandidate fixes and suggestions"]
+        Pytest["Tester\npytest suite"]
+        Demo["Example Runner\ndemo.py"]
+        Evidence[("Reproducible Evidence\nassets/test-output.txt\nassets/demo-output.txt")]
+
+        AIAssistant -->|"Draft fix or explanation"| HumanCheck
+        HumanCheck -->|"Accept, reject, or revise suggestion"| Processing
+        HumanCheck -->|"Review behavior and test failures"| Pytest
+        HumanCheck -->|"Inspect example interactions"| Demo
+        Range -.->|"Test range cases"| Pytest
+        Parser -.->|"Test valid and invalid input"| Pytest
+        Evaluator -.->|"Test hints and win/loss"| Pytest
+        Scorer -.->|"Test score updates"| Pytest
+        Demo -->|"Fixed guess examples"| Evaluator
+        Pytest -->|"Test report"| Evidence
+        Demo -->|"Interaction log"| Evidence
     end
 
-    UI -->|"difficulty"| Range
-    Range -->|"inclusive range"| UI
-    UI -->|"raw input"| Parse
-    Parse -->|"valid guess or error"| UI
-    UI -->|"guess, secret"| Compare
-    Compare -->|"outcome, hint"| UI
-    UI -->|"score, outcome, attempt"| Score
-    Score -->|"updated score"| UI
-    UI -->|"win, loss, or continue"| User
-
-    Logic -.->|"unit-tested pure functions"| Pytest
-    Logic -.->|"fixed example inputs"| Demo
-    Pytest --> Evidence
-    Demo --> Evidence
+    UI -->|"5. Hint, win/loss message, score"| Human

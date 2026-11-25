@@ -10,35 +10,31 @@ The optional commentary client uses the OpenAI Responses API. Its model is confi
 
 AI-generated commentary may be inaccurate or inappropriate despite instructions to follow the game result. It is presentation only and must not be used to determine hints, win/loss, or scoring. Enabling commentary transmits the listed game facts to OpenAI and may incur API charges. Do not enter personal or sensitive information as a guess.
 
-## AI collaboration
+## Limitations and biases
 
-AI assistance was used as a coding teammate during debugging. The starter reflection records Claude-assisted exploration, while the final implementation and documentation were reviewed by a human. AI suggestions identified likely root causes, but final correctness came from source review, the demo runner, and pytest.
+The game does not use demographic data or make decisions about people, so it has no direct demographic classification bias. It does have accessibility and representation limitations: the interface is English-only, hints assume players understand "higher" and "lower," and the fixed difficulty ranges and attempt limits will not suit every player. The developer debug panel reveals the secret and must not be enabled in a public player-facing deployment.
 
-### AI-suggested changes verified and accepted
+The OpenAI commentary can vary between runs and may be inaccurate, confusing, or inappropriate despite the prompt instructions. It is not authoritative: deterministic code alone decides the hint, win/loss state, and score. Only a small amount of game context is sent, and the secret is excluded, but requests still go to an external provider and can incur charges.
 
-- Keep the secret number in Streamlit `session_state` instead of recreating it on every rerun.
-- Compare integer values consistently rather than alternating secret values between `int` and `str`.
-- Route parsing and comparison through `logic_utils.py`.
-- Generate a new secret after a difficulty change or New Game button.
+## Potential misuse and safeguards
 
-### AI suggestions accepted with changes
+The API could be misused by repeatedly triggering requests to consume the owner's API quota, or by exposing the game publicly without controlling who can use it. The model might also produce misleading commentary or text unsuitable for a player. The current safeguards are to make AI opt-in and disabled by default, call it only for valid guesses, cap the response at 60 output tokens, send no secret or free-form user prompt, and keep it out of the game decision path. Keep the API key private and use provider spending limits. Before public deployment, add authentication and request rate limits, and review or moderate generated text; the current local educational app does not provide those deployment controls.
 
-The base app contained duplicated and misleading logic. I normalized it and added explicit range mappings through pure helper functions rather than relying on UI-only rules. I also reorganized tests so they assert complete `(outcome, message)` results instead of comparing a tuple to a string.
+## Reliability testing reflection
 
-### AI suggestions not accepted
+The latest automated run passed 27 tests, including deterministic game logic and mocked OpenAI success, missing-key, empty-response, and provider-error cases. One surprising result during the original testing was that the starter tests compared `check_guess` to a string even though the helper returns an `(outcome, message)` tuple; the test expectation itself needed correction. I also learned that a mocked API test proves the request/response handling, not the live model's quality. The live API and browser flow are not covered by automated tests, so I cannot claim the model commentary has been evaluated for accuracy or safety.
 
-The original game fix did not need an external model, so I kept game evaluation deterministic. In response to the later request for live AI, I added an optional API for commentary only rather than letting an LLM decide the result. AI was not treated as an authority: generated fixes were tested locally. I also rejected the original workaround that converted the secret to a string on alternating turns because that intentionally created inconsistent types and hid the real bug.
+## AI collaboration reflection
 
-## Bias and fairness reflections
+AI was used as a debugging and implementation teammate; the starter reflection records Claude-assisted exploration, and later project changes used Copilot assistance. Suggestions were treated as hypotheses and checked against the code, tests, and reproducible demo.
 
-The system has no demographic data and makes no decisions about people. Its main bias risks are representational and usability biases:
+### Suggestion accepted
 
-- Hints assume the player understands "higher" and "lower."
-- Range and attempt settings give experienced players more or fewer challenges but do not unfairly target a protected group.
-- English-only interface text may exclude users who do not read English.
-- The debug panel reveals the secret and should be used only for development.
+I accepted the suggestion to keep the secret number in Streamlit `session_state` across reruns. This addresses the root state-reset bug instead of recreating the target on each click. I also followed the suggestion to parse guesses as integers and compare integer values consistently. I verified the related behavior through the deterministic game logic and tests.
 
-Future versions could add localization, adjustable text size, and accessible labels.
+### Suggestion rejected or revised
+
+I rejected the workaround that converted the secret to a string on alternating attempts. It was harder to reason about and introduced inconsistent types instead of fixing the comparison path. I kept the guess and secret numeric, and made outcome evaluation remain deterministic. For the later request to add a live model, I limited AI to optional commentary rather than letting it control the result or score; this avoids allowing a variable model response to break game correctness.
 
 ## Testing results
 

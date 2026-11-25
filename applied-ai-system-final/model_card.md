@@ -2,7 +2,13 @@
 
 ## Intended use
 
-This application is a small educational number-guessing game. It demonstrates input validation, state management, comparison logic, scoring, and test-driven debugging. It is intended for course demonstrations and local practice, not for real-world prediction or high-stakes decision-making.
+This application is a small educational number-guessing game. It demonstrates input validation, state management, comparison logic, scoring, and test-driven debugging. An optional OpenAI model generates short commentary about valid guesses; deterministic code, not the model, decides game outcomes and scores. It is intended for course demonstrations and local practice, not for real-world prediction or high-stakes decision-making.
+
+## Live AI component
+
+The optional commentary client uses the OpenAI Responses API. Its model is configurable with `OPENAI_MODEL` and defaults to `gpt-6.2-astra`. It receives the player's guess, difficulty, attempt number, and already-determined outcome; the secret number is not included in the request. The API key is read from `OPENAI_API_KEY`, not stored in code. The app displays API errors and keeps deterministic game behavior available when commentary fails.
+
+AI-generated commentary may be inaccurate or inappropriate despite instructions to follow the game result. It is presentation only and must not be used to determine hints, win/loss, or scoring. Enabling commentary transmits the listed game facts to OpenAI and may incur API charges. Do not enter personal or sensitive information as a guess.
 
 ## AI collaboration
 
@@ -21,7 +27,7 @@ The base app contained duplicated and misleading logic. I normalized it and adde
 
 ### AI suggestions not accepted
 
-I did not add external APIs or an opaque machine-learning model. AI was not treated as an authority: generated fixes were tested locally. I also rejected the original workaround that converted the secret to a string on alternating turns because that intentionally created inconsistent types and hid the real bug.
+The original game fix did not need an external model, so I kept game evaluation deterministic. In response to the later request for live AI, I added an optional API for commentary only rather than letting an LLM decide the result. AI was not treated as an authority: generated fixes were tested locally. I also rejected the original workaround that converted the secret to a string on alternating turns because that intentionally created inconsistent types and hid the real bug.
 
 ## Bias and fairness reflections
 
@@ -46,13 +52,13 @@ Testing uses `pytest` with pure functions for deterministic coverage:
 - Score updates add win points and bounded minimum win points.
 - Negative guesses, whitespace, decimal input, `None`, and unknown difficulty names are covered.
 - `Too High` and `Too Low` scoring and invalid-outcome score preservation are tested.
+- AI helper tests verify configured/default model selection, secret omission from request input, missing API key, empty response, and provider-error reporting.
 
 ### Testing limitations
 
-The current suite does not automate browser rendering or Streamlit rerun timing. It does not use randomized property tests or verify every possible secret number. These limits reduce confidence in UI behavior compared with confidence in pure game logic. Browser automation should be added after Streamlit behavior is stable.
+The current suite does not automate browser rendering or Streamlit rerun timing. It does not use randomized property tests or verify every possible secret number. OpenAI integration tests mock the client and do not verify live model quality, availability, or provider billing. These limits reduce confidence in UI and live-service behavior compared with confidence in pure game logic. Browser automation and an opt-in live smoke test can be added after Streamlit behavior is stable.
 
-Run `python3 -m pytest -q` to reproduce. Exact output is in [assets/test-output.txt](assets/test-output.txt). The logic-only demo output is in [assets/demo-output.txt](assets/demo-output.txt).
-The latest recorded run passed 22 test cases with no failures. This project does not use a live generative model at runtime, so it does not report AI confidence scores.
+Run `python3 -m pytest -q` to reproduce. Exact output is in [assets/test-output.txt](assets/test-output.txt). The logic-only demo output is in [assets/demo-output.txt](assets/demo-output.txt). The latest suite passed 27 cases and covers mocked API success, missing-key and empty-response errors, plus provider-error reporting. This does not calculate AI confidence scores or verify live response quality.
 
 ## Reflection prompts
 

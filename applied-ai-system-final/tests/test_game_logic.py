@@ -1,5 +1,10 @@
 import pytest
 
+from ai_commentary import (
+    CommentaryGenerationError,
+    DEFAULT_MODEL,
+    generate_commentary,
+)
 from logic_utils import check_guess, get_range_for_difficulty, parse_guess, update_score
 
 
@@ -59,3 +64,99 @@ def test_difficulty_ranges(difficulty, expected):
 )
 def test_update_score(starting_score, outcome, attempt, expected):
     assert update_score(starting_score, outcome, attempt) == expected
+
+
+def test_generate_commentary_uses_configured_openai_model(monkeypatch):
+    import ai_commentary
+
+    captured = {}
+
+    class FakeResponses:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return type("Response", (), {"output_text": "  Nice guess!  "})()
+
+    class FakeClient:
+        def __init__(self, api_key):
+            captured["api_key"] = api_key
+            self.responses = FakeResponses()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    monkeypatch.setattr(ai_commentary, "OpenAI", FakeClient)
+
+    result = generate_commentary(40, "Too Low", 1, "Normal")
+
+    assert result == "Nice guess!"
+    assert captured["api_key"] == "test-key"
+    assert captured["model"] == "test-model"
+    assert "Authoritative outcome: Too Low" in captured["input"]
+    assert "secret" not in captured["input"].lower()
+
+
+def test_generate_commentary_requires_api_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    with pytest.raises(CommentaryGenerationError, match="OPENAI_API_KEY"):
+        generate_commentary(40, "Too Low", 1, "Normal")
+
+
+def test_generate_commentary_uses_default_model(monkeypatch):
+    import ai_commentary
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    captured = {}
+
+    class FakeResponses:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return type("Response", (), {"output_text": "Good try!"})()
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(ai_commentary, "OpenAI", FakeClient)
+
+    assert generate_commentary(60, "Too High", 2, "Normal") == "Good try!"
+    assert captured["model"] == DEFAULT_MODEL
+
+
+def test_generate_commentary_rejects_empty_response(monkeypatch):
+    import ai_commentary
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    class FakeResponses:
+        def create(self, **kwargs):
+            return type("Response", (), {"output_text": "  "})()
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(ai_commentary, "OpenAI", FakeClient)
+
+    with pytest.raises(CommentaryGenerationError, match="empty commentary"):
+        generate_commentary(60, "Too High", 2, "Normal")
+
+
+def test_generate_commentary_reports_openai_errors(monkeypatch):
+    import ai_commentary
+    from openai import OpenAIError
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    class FakeResponses:
+        def create(self, **kwargs):
+            raise OpenAIError("simulated provider failure")
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(ai_commentary, "OpenAI", FakeClient)
+
+    with pytest.raises(CommentaryGenerationError, match="simulated provider failure"):
+        generate_commentary(60, "Too High", 2, "Normal")

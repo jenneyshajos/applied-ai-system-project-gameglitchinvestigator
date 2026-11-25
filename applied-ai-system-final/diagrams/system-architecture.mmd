@@ -12,6 +12,7 @@ flowchart LR
         Parser["Input Processor\nparse_guess"]
         Evaluator["Result Evaluator\ncheck_guess"]
         Scorer["Score Calculator\nupdate_score"]
+        Commentary["Optional Commentary\nai_commentary.py"]
 
         UI -->|"3. Chosen difficulty"| Range
         Range -->|"Number range"| UI
@@ -21,6 +22,10 @@ flowchart LR
         Evaluator -->|"Outcome and hint"| UI
         UI -->|"Outcome and attempt number"| Scorer
         Scorer -->|"Updated score"| UI
+        UI -->|"Guess, difficulty, attempt,\nauthoritative outcome only"| Commentary
+        Commentary -->|"Prompt excludes secret"| OpenAI["OpenAI Responses API\nmodel from OPENAI_MODEL"]
+        OpenAI -->|"Variable commentary"| UI
+        Commentary -->|"Visible error on failure"| UI
     end
 
     subgraph Verification["Testing and AI Result Checking"]
@@ -38,9 +43,11 @@ flowchart LR
         Parser -.->|"Test valid and invalid input"| Pytest
         Evaluator -.->|"Test hints and win/loss"| Pytest
         Scorer -.->|"Test score updates"| Pytest
+        Commentary -.->|"Mocked API success and failures"| Pytest
         Demo -->|"Fixed guess examples"| Evaluator
         Pytest -->|"Test report"| Evidence
         Demo -->|"Interaction log"| Evidence
     end
 
     UI -->|"5. Hint, win/loss message, score"| Human
+    UI -->|"Optional AI-generated commentary"| Human

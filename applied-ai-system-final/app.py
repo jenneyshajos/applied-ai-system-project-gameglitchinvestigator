@@ -2,6 +2,7 @@ import random
 
 import streamlit as st
 
+from ai_commentary import CommentaryGenerationError, generate_commentary
 from logic_utils import (
     check_guess,
     get_range_for_difficulty,
@@ -33,6 +34,8 @@ low, high = get_range_for_difficulty(difficulty)
 
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
+ai_commentary_enabled = st.sidebar.checkbox("Enable AI commentary", value=False)
+st.sidebar.caption("Requires an OpenAI API key; game results work without it.")
 
 if "difficulty" not in st.session_state:
     st.session_state.difficulty = difficulty
@@ -89,6 +92,19 @@ if submit:
 
         if show_hint:
             st.info(message)
+
+        if ai_commentary_enabled:
+            try:
+                commentary = generate_commentary(
+                    guess=guess,
+                    outcome=outcome,
+                    attempt_number=st.session_state.attempts,
+                    difficulty=difficulty,
+                )
+            except CommentaryGenerationError as error:
+                st.error(f"AI commentary unavailable: {error}")
+            else:
+                st.info(f"AI commentary: {commentary}")
 
         st.session_state.score = update_score(
             st.session_state.score,

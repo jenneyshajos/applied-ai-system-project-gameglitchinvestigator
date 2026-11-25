@@ -1,0 +1,14 @@
+flowchart TD
+    User[Player] --> UI[Streamlit UI in app.py]
+    UI --> Parse[parse_guess]
+    Parse --> Compare[check_guess]
+    UI --> Score[update_score]
+    Compare --> State[(Streamlit session_state)]
+    Score --> State
+    State --> UI
+    UI --> GameEnd[Win or Loss]
+    Logic[logic_utils.py pure helpers] -. used by .-> Parse
+    Logic -. used by .-> Compare
+    Logic -. used by .-> Score
+    Tests[pytest suite] --> Logic
+    Demo[demo.py] --> Logic

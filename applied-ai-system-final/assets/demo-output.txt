@@ -1,0 +1,3 @@
+Guess 40, secret 50: Too Low - Go higher.
+Guess 60, secret 50: Too High - Go lower.
+Guess 50, secret 50: Win - Correct!

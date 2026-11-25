@@ -97,9 +97,9 @@ Run the test suite from `applied-ai-system-final/`:
 python3 -m pytest -q
 ```
 
-The current suite passes **22 tests**, covering correct/high/low guesses, whole-number input parsing and invalid input, difficulty ranges, and score updates. The fixed-input demo also reproduces the three sample outcomes above. The saved results are in [assets/test-output.txt](assets/test-output.txt) and [assets/demo-output.txt](assets/demo-output.txt).
+Latest run: **22 test cases passed, 0 failed**. The parameterized tests check correct/high/low guesses, whole-number parsing (including blank, whitespace, `None`, nonnumeric, and decimal input), difficulty ranges, and score updates. The fixed-input demo also produces the three expected outcomes shown above. Re-run the command to reproduce; exact outputs are saved in [assets/test-output.txt](assets/test-output.txt) and [assets/demo-output.txt](assets/demo-output.txt).
 
-What worked: isolating game logic made it possible to test edge cases quickly and reliably. What is not covered: the suite does not automate browser rendering, Streamlit button interactions, or rerun/state behavior end to end. This reinforced the value of testing pure logic separately while recognizing that a passing unit suite does not replace UI testing.
+What worked: isolating game logic made it possible to assert expected behavior on edge cases quickly and reliably. What is not covered: the suite does not automate browser rendering, Streamlit button interactions, or rerun/state behavior end to end. This project does not call a live AI model to generate game outputs, so AI confidence scores are not applicable; reliability is measured with automated tests instead. A passing unit suite does not replace UI testing.
 
 ## Reflection
 

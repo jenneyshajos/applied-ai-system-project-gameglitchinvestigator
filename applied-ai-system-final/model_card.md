@@ -52,6 +52,7 @@ Testing uses `pytest` with pure functions for deterministic coverage:
 The current suite does not automate browser rendering or Streamlit rerun timing. It does not use randomized property tests or verify every possible secret number. These limits reduce confidence in UI behavior compared with confidence in pure game logic. Browser automation should be added after Streamlit behavior is stable.
 
 Run `python3 -m pytest -q` to reproduce. Exact output is in [assets/test-output.txt](assets/test-output.txt). The logic-only demo output is in [assets/demo-output.txt](assets/demo-output.txt).
+The latest recorded run passed 22 test cases with no failures. This project does not use a live generative model at runtime, so it does not report AI confidence scores.
 
 ## Reflection prompts
 

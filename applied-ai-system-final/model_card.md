@@ -6,7 +6,7 @@ This application is a small educational number-guessing game. It demonstrates in
 
 ## AI collaboration
 
-AI assistance was used as a coding teammate during debugging. It helped identify candidates for fixes, but the final behavior was verified with source review, the demo runner, and tests.
+AI assistance was used as a coding teammate during debugging. The starter reflection records Claude-assisted exploration, while the final implementation and documentation were reviewed by a human. AI suggestions identified likely root causes, but final correctness came from source review, the demo runner, and pytest.
 
 ### AI-suggested changes verified and accepted
 
@@ -17,7 +17,7 @@ AI assistance was used as a coding teammate during debugging. It helped identify
 
 ### AI suggestions accepted with changes
 
-The base app contained duplicated and misleading logic. I normalized it and added explicit range validation through pure helper functions rather than relying on UI-only rules. I also rewrote tests so they assert complete `(outcome, message)` results instead of comparing a tuple to a string.
+The base app contained duplicated and misleading logic. I normalized it and added explicit range mappings through pure helper functions rather than relying on UI-only rules. I also reorganized tests so they assert complete `(outcome, message)` results instead of comparing a tuple to a string.
 
 ### AI suggestions not accepted
 
@@ -44,6 +44,12 @@ Testing uses `pytest` with pure functions for deterministic coverage:
 - Empty and nonnumeric input is rejected with useful errors.
 - Easy, Normal, Hard, and unknown difficulty ranges are checked.
 - Score updates add win points and bounded minimum win points.
+- Negative guesses, whitespace, decimal input, `None`, and unknown difficulty names are covered.
+- `Too High` and `Too Low` scoring and invalid-outcome score preservation are tested.
+
+### Testing limitations
+
+The current suite does not automate browser rendering or Streamlit rerun timing. It does not use randomized property tests or verify every possible secret number. These limits reduce confidence in UI behavior compared with confidence in pure game logic. Browser automation should be added after Streamlit behavior is stable.
 
 Run `python3 -m pytest -q` to reproduce. Exact output is in [assets/test-output.txt](assets/test-output.txt). The logic-only demo output is in [assets/demo-output.txt](assets/demo-output.txt).
 

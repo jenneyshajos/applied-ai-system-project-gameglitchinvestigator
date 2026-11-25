@@ -1,14 +1,36 @@
-flowchart TD
-    User[Player] --> UI[Streamlit UI in app.py]
-    UI --> Parse[parse_guess]
-    Parse --> Compare[check_guess]
-    UI --> Score[update_score]
-    Compare --> State[(Streamlit session_state)]
-    Score --> State
-    State --> UI
-    UI --> GameEnd[Win or Loss]
-    Logic[logic_utils.py pure helpers] -. used by .-> Parse
-    Logic -. used by .-> Compare
-    Logic -. used by .-> Score
-    Tests[pytest suite] --> Logic
-    Demo[demo.py] --> Logic
+flowchart LR
+    subgraph Client["Streamlit application"]
+        User["Player"]
+        UI["app.py\nInterface and rerun handling"]
+        State[("session_state\nsecret, attempts, score,\nstatus, history, difficulty")]
+        User -->|"text guess or button"| UI
+        UI <-->|"read and persist game state"| State
+    end
+
+    subgraph Logic["Pure game logic"]
+        Range["get_range_for_difficulty"]
+        Parse["parse_guess"]
+        Compare["check_guess"]
+        Score["update_score"]
+    end
+
+    subgraph Results["Verification"]
+        Pytest["pytest suite"]
+        Demo["demo.py"]
+        Evidence["assets/demo-output.txt\nassets/test-output.txt"]
+    end
+
+    UI -->|"difficulty"| Range
+    Range -->|"inclusive range"| UI
+    UI -->|"raw input"| Parse
+    Parse -->|"valid guess or error"| UI
+    UI -->|"guess, secret"| Compare
+    Compare -->|"outcome, hint"| UI
+    UI -->|"score, outcome, attempt"| Score
+    Score -->|"updated score"| UI
+    UI -->|"win, loss, or continue"| User
+
+    Logic -.->|"unit-tested pure functions"| Pytest
+    Logic -.->|"fixed example inputs"| Demo
+    Pytest --> Evidence
+    Demo --> Evidence
